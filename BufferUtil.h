@@ -17,7 +17,7 @@ namespace Forest
         bufferChain()
 			:_next(nullptr),_bufferLen(0),_misalign(0),_off(0),_buffer(nullptr){};
     };
-    constexpr size_t kBuffer_chain_size = sizeof(bufferChain);
+    constexpr size_t kBufferChainSize = sizeof(bufferChain);
 
     //for searching
 	struct buffer_ptr
