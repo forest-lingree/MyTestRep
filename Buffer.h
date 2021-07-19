@@ -21,9 +21,11 @@ namespace Forest
         size_t writeDataToFd(const int fd);
     private:
         int expandBuffer(size_t size/*, int n */);
+        void removeDataAndReuseChain(size_t n);
         void insertBufferChain(bufferChain* chain); //insert bufferChain after lastWithData;
         bufferChain *creatBufferChain(size_t size);
         std::shared_ptr<struct iovec> generateIovec(const int n, bufferChain *&pChain);
+        void destroyBuffer();
     private:
         size_t _totalLen;
         size_t _chainSize;

@@ -6,8 +6,10 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
+#include "Buffer.h"
 
 using namespace std;
+using namespace Forest;
 
 #define MAXLINE 80
 #define SERV_PORT 6666
@@ -29,15 +31,17 @@ int main()
 	listen(listenfd, 20);
 
 	printf("Accepting connections ...\n");
-
+	Forest::Buffer myBuffer;
     while (1) {
 		cliaddr_len = sizeof(cliaddr);
 		connfd = accept(listenfd, (struct sockaddr *)&cliaddr, &cliaddr_len);
-		n = read(connfd, buf, MAXLINE);
+		//n = read(connfd, buf, MAXLINE);
+		n = myBuffer.readDataFromFd(connfd);
 		printf("received from %s at PORT %d\n",
 		inet_ntop(AF_INET, &cliaddr.sin_addr, str, sizeof(str)),
 		ntohs(cliaddr.sin_port));
-		write(connfd, buf, n);
+		//write(connfd, buf, n);
+		myBuffer.writeDataToFd(connfd);
 		close(connfd);
 	}
 
