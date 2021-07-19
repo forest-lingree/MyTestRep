@@ -2,7 +2,11 @@
 #define FOREST_BUFFER_H
 
 #include <string>
+#include <memory>
+#include <sys/ioctl.h>
+
 #include"BufferUtil.h"
+
 namespace Forest
 {
     //todo: use shared_ptr to replace bufferChain*
@@ -16,9 +20,10 @@ namespace Forest
         size_t readDataFromFd(const int fd);
         size_t writeDataToFd(const int fd);
     private:
-        void expandBuffer(size_t size/*, int n */);
+        int expandBuffer(size_t size/*, int n */);
         void insertBufferChain(bufferChain* chain); //insert bufferChain after lastWithData;
         bufferChain *creatBufferChain(size_t size);
+        std::shared_ptr<struct iovec> generateIovec(const int n, bufferChain *&pChain);
     private:
         size_t _totalLen;
         size_t _chainSize;

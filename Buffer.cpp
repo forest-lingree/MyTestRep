@@ -1,8 +1,10 @@
 #include<iostream>
-#include <sys/ioctl.h>
 #include <assert.h>
+#include <sys/ioctl.h>
+#include <sys/uio.h>
 #include"Buffer.h"
 
+using namespace std;
 namespace Forest{
     Buffer::Buffer()
     :_first(nullptr),
@@ -23,23 +25,38 @@ namespace Forest{
             std::cout << "ioctrl error";
             throw(std::length_error("data size mast be positive"));
         }
-
+        int chainCnt = 0;
         try
         {
-            expandBuffer(howmuch);
+            chainCnt = expandBuffer(howmuch);
         }
         catch(...)
         {
             std::cout << "expand buffer failed /n";
             throw;
         }
-
-        struct iovec *vec;
-        
-
+        shared_ptr<struct iovec> vecs = generateIovec(chainCnt, pChain);
+        n = readv(fd, vecs.get(), chainCnt);
+        if(n == -1 || n == 0)
+        {
+            return n;
+        }
+        for(i = 0; i < chainCnt; ++i)
+        {
+            pChain->_off += vecs.get()[i].iov_len;
+            pChain = pChain->_next;
+        }
+        pChain = _first;
+        while(pChain->_next != nullptr && pChain->_next->_off != 0)
+        {
+            pChain = pChain->_next;
+        }
+        _lastWithData = pChain;
+        _totalLen += n;
+        return n;
     }
 
-    void Buffer::expandBuffer(size_t size /*, int n */) 
+    int Buffer::expandBuffer(size_t size /*, int n */) 
     {
         bufferChain *chain = nullptr, *tmp = nullptr;
         size_t avail = 0;
@@ -57,16 +74,18 @@ namespace Forest{
                 if(space > 0)
                 {
                     avail += space;
+                    ++used;
                 }
             }
             else
             {
                 chain->_misalign = 0;
                 avail += chain->_bufferLen;
+                ++used;
             }
             if(avail >= size)
             {
-                return;
+                return used;
             }
 
             size -= avail;
@@ -79,7 +98,8 @@ namespace Forest{
                 std::cout << "creatBufferChain failed";
             }
             insertBufferChain(tmp);
-            return;
+            ++used;
+            return used;
         }
 
     }
@@ -136,4 +156,29 @@ namespace Forest{
         chain->_buffer = reinterpret_cast<char*>(chain + 1);
         return chain;
     }
+
+    std::shared_ptr<struct iovec> Buffer::generateIovec(const int n, bufferChain *&pChain)
+    {
+        std::shared_ptr<struct iovec> iovecs(new struct iovec[n]);
+        bufferChain *chain = nullptr;
+        bufferChain *firstAvailable = nullptr;
+        size_t all_avail = 0;
+        int i = 0;
+        firstAvailable = _lastWithData;
+        if(firstAvailable->_bufferLen - firstAvailable->_misalign - firstAvailable->_off == 0)
+        {
+            firstAvailable = firstAvailable->_next;
+        }
+        assert(firstAvailable != nullptr);
+
+        for(;i < n; ++i)
+        {
+            size_t avail = chain->_bufferLen - chain->_misalign - chain->_off;
+            iovecs.get()[i].iov_base = (void*)(chain->_buffer + chain->_misalign + chain->_off);
+            iovecs.get()[i].iov_len = avail;
+        }
+        pChain = firstAvailable;
+        return iovecs;
+    }
 }
+
