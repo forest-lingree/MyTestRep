@@ -20,6 +20,7 @@ namespace Forest
         size_t readDataFromFd(const int fd);
         size_t writeDataToFd(const int fd);
     private:
+        bool addDataToBuffer(const char *dataIn, size_t datalen);
         int expandBuffer(size_t size/*, int n */);
         void removeDataAndReuseChain(size_t n);
         void insertBufferChain(bufferChain* chain); //insert bufferChain after lastWithData;
