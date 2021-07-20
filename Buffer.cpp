@@ -18,6 +18,7 @@ namespace Forest{
     Buffer::~Buffer()
     {
         //destroyBuffer();
+        
         bufferChain* chain = _first;
         bufferChain* next = nullptr;
         while(chain != nullptr)
@@ -26,6 +27,10 @@ namespace Forest{
             ::delete chain;
             chain = next;
         }
+    }
+    bool Buffer::addDataToBuffer(const char *dataIn, size_t datalen)
+    {
+        bufferChain *chain = nullptr, *tmp = nullptr;
     }
 
     void Buffer::destroyBuffer()
@@ -57,6 +62,10 @@ namespace Forest{
             {
                 std::cout << "ioctrl error";
                 throw(std::length_error("data size mast be positive"));
+            }
+            if(howmuch == 0)
+            {
+                std::cout <<"fd to read is empty, looping";
             }
         }
         int chainCnt = 0;
